@@ -9,7 +9,7 @@
 
 #include "NeighborList.h"
 #include <vector>
-#include <stack>
+#include <queue>
 #include <algorithm>
 
 template <typename T> class Graph {
@@ -22,7 +22,6 @@ private:
     void update_neighbors();
     size_t find_index(const T&) const;
     void dfs(size_t, std::vector<bool>&, std::ostream&) const;
-    void bfs(size_t, std::vector<bool>&, std::ostream&, size_t) const;
     
 public:
     Graph();
@@ -103,7 +102,7 @@ bool Graph<T>::check_connection(const T& obj1, const T& obj2) const {
     return false;
 }
 
-// perform a depth first search on graph
+// perform a depth first search on graph using iterative calls
 // Time: O(2 * n_edges)
 template <typename T>
 void Graph<T>::depth_first_search(size_t start_i, std::ostream& os) const {
@@ -116,20 +115,29 @@ void Graph<T>::depth_first_search(size_t start_i, std::ostream& os) const {
     }
 }
 
-// perform a breadth first search on graph
+// perform a breadth first search on graph using a queue
 template <typename T>
 void Graph<T>::breadth_first_search(size_t start_i, std::ostream& os) const {
-    if (start_i < n_vertices) {
-        std::vector<bool> visited(n_vertices, 0);
-        visited[start_i] = 1;
-        os << vertices[start_i] << "  ";
-        size_t n_visit = 1;
-        bfs(start_i, visited, os, n_visit);
-        os << std::endl;
-    } else {
-        os << "index out of bound" << std::endl;
+    std::vector<bool> visited(n_vertices, 0);
+    std::queue<size_t> bfs_q;
+    visited[start_i] = 1;
+    bfs_q.push(start_i);
+    while (!bfs_q.empty()) {
+        size_t i = bfs_q.front();
+        os << vertices[i] << "  ";
+        bfs_q.pop();
+        NeighborList::Node* p = neighbors[i].head;
+        while (p) {
+            if (!visited[p->index]) {
+                bfs_q.push(p->index);
+                visited[p->index] = 1;
+            }
+            p = p->next;
+        }
     }
+    os << std::endl;
 }
+
 
 
 // private utility functions
@@ -161,24 +169,6 @@ const {
         next_check = next_check->next;
     }
 }
-
-// breadth first search
-template <typename T>
-void Graph<T>::bfs(size_t i, std::vector<bool>& visited, std::ostream& os,
-size_t n_visit) const {
-    NeighborList::Node* p1 = neighbors[i].head;
-    NeighborList::Node* p2 = p1;
-    while (p2) {
-        if (!visited[p2->index]) {
-            visited[p2->index] = 1;
-            ++n_visit;
-            os << vertices[p2->index] << "  "; 
-        }
-        p2 = p2->next;
-    }
-    if (n_visit < n_vertices) {bfs(p1->index, visited, os, n_visit);}
-}
-
 
 
 
